@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SensorData</string>
+    <string name="share_csv_file_to">Share CSV File TO</string>
+    <string name="save_csv_file_to">Save CSV File TO</string>
+    <string name="clear_csv_data">Clear CSV Data</string>
+    <string name="start_collecting_sendor_data">Start Collecting sendor data</string>
+</resources>
