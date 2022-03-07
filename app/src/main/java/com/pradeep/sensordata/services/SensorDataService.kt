@@ -66,7 +66,7 @@ class SensorDataService : Service(), SensorEventListener {
                    newFile=true
                 }
                 @OptIn(KotlinCsvExperimental::class)
-                csvFileWriter = csvWriter().openAndGetRawWriter(file)
+                csvFileWriter = csvWriter().openAndGetRawWriter(file, append = true)
                 if(newFile){
                     //CSV Header
                     val header = listOf("datetime","acc_X","acc_Y", "acc_Z","gyro_X","gyro_Y","gyro_Z")
@@ -97,10 +97,10 @@ class SensorDataService : Service(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         timer.cancel()
+        sensorManager.unregisterListener(this)
         if((::csvFileWriter.isInitialized)){
             csvFileWriter.close()
         }
-        sensorManager.unregisterListener(this)
 
     }
 

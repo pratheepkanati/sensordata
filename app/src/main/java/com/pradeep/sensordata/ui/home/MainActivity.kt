@@ -183,8 +183,9 @@ class MainActivity : AppCompatActivity() {
                                 dialog.dismiss()
                                 Snackbar.make(binding.root,"Saved Successfully", Snackbar.LENGTH_SHORT)
                                     .setAction("open"){
-                                        val intent = Intent(Intent.ACTION_EDIT)
+                                        val intent = Intent(Intent.ACTION_VIEW)
                                         intent.setDataAndType(uri, "text/plain")
+                                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         startActivity(intent)
                                     }
                                     .show()
