@@ -211,6 +211,7 @@ class MainActivity : AppCompatActivity() {
         if(isMyServiceRunning(SensorDataService::class.java)){
             unbindService(connection)
             stopService(Intent(this,SensorDataService::class.java))
+
         }
     }
 }
