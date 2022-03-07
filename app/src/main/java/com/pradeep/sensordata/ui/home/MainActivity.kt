@@ -203,5 +203,14 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if(isMyServiceRunning(SensorDataService::class.java)){
+            unbindService(connection)
+            stopService(Intent(this,SensorDataService::class.java))
+        }
     }
 }
