@@ -6,9 +6,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import java.text.SimpleDateFormat
+import java.util.*
 
 object Utils {
-
+ fun  getCurrentDateTime():String{
+     val simpleDateFormat =  SimpleDateFormat("yyyy.MM.dd.HH.mm.ss",Locale.ENGLISH)
+     simpleDateFormat.timeZone= TimeZone.getTimeZone("UTC")
+     return  simpleDateFormat.format(Date())
+ }
 
 }
 

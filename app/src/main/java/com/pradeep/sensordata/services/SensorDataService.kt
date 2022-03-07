@@ -8,6 +8,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -17,6 +18,7 @@ import com.github.doyaaaaaken.kotlincsv.client.CsvFileWriter
 import com.github.doyaaaaaken.kotlincsv.client.KotlinCsvExperimental
 import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import com.pradeep.sensordata.R
+import com.pradeep.sensordata.utils.Utils
 import com.pradeep.sensordata.utils.launchPeriodicAsync
 import kotlinx.coroutines.*
 import java.io.File
@@ -26,10 +28,14 @@ class SensorDataService : Service(), SensorEventListener {
     val SENSOR_SERVICE = "sensor_service"
     val SERVICE_ID=10
     lateinit var  sensorManager: SensorManager
-    val accelerometerValues = FloatArray(3)
-    val gyroScopeValues = FloatArray(3)
+     val accelerometerValues = FloatArray(3)
+     val gyroScopeValues = FloatArray(3)
     lateinit var timer:Job
     lateinit var csvFileWriter: CsvFileWriter
+    // Binder given to clients
+    private val binder = LocalBinder()
+    var callback: ((FloatArray, FloatArray) -> Unit)? = null
+
     override fun onCreate() {
         super.onCreate()
         // for long running service  w
@@ -62,7 +68,9 @@ class SensorDataService : Service(), SensorEventListener {
                 @OptIn(KotlinCsvExperimental::class)
                 csvFileWriter = csvWriter().openAndGetRawWriter(file)
                 if(newFile){
-                    val header = listOf("unixTimestamp","acc_X","acc_Y", "acc_Z","gyro_X","gyro_Y","gyro_Z")
+                    //CSV Header
+                    val header = listOf("datetime","acc_X","acc_Y", "acc_Z","gyro_X","gyro_Y","gyro_Z")
+                    // adding data to file
                     csvFileWriter.writeRow(header)
                 }
 
@@ -73,14 +81,17 @@ class SensorDataService : Service(), SensorEventListener {
 
     }
      private fun appendDataToCSV(){
-
-         val row1 = listOf((System.currentTimeMillis()/1000),accelerometerValues[0],accelerometerValues[1], accelerometerValues[2],gyroScopeValues[0],gyroScopeValues[1], gyroScopeValues[2])
+         val row1 = listOf(Utils.getCurrentDateTime(),accelerometerValues[0],accelerometerValues[1], accelerometerValues[2],gyroScopeValues[0],gyroScopeValues[1], gyroScopeValues[2])
+         // adding data to csv file
          csvFileWriter.writeRow(row1)
+         callback?.let { it(accelerometerValues,gyroScopeValues) }
      }
 
 
+
+
     override fun onBind(intent: Intent): IBinder {
-        TODO("Return the communication channel to the service.")
+        return  binder
     }
 
     override fun onDestroy() {
@@ -148,5 +159,16 @@ class SensorDataService : Service(), SensorEventListener {
             .setSmallIcon(R.drawable.ic_baseline_edgesensor_high_24)
         return builder
     }
+
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    inner class LocalBinder : Binder() {
+        // Return this instance of LocalService so clients can call public methods
+        fun getService(): SensorDataService = this@SensorDataService
+    }
+
 
 }

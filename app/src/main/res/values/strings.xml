@@ -4,4 +4,9 @@
     <string name="save_csv_file_to">Save CSV File TO</string>
     <string name="clear_csv_data">Clear CSV Data</string>
     <string name="start_collecting_sendor_data">Start Collecting sendor data</string>
+    <string name="x_axis">X-axis</string>
+    <string name="y_axis">Y-axis</string>
+    <string name="z_axis">Z-axis</string>
+    <string name="gyroscope_sensor_data">Gyroscope Sensor data</string>
+    <string name="accelerometers_sensor_data">Accelerometers Sensor data</string>
 </resources>

@@ -2,14 +2,21 @@ package com.pradeep.sensordata.ui.home
 
 import android.app.Activity
 import android.app.ProgressDialog
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.lifecycle.coroutineScope
 import com.google.android.material.snackbar.Snackbar
+import com.pradeep.sensordata.BuildConfig
 import com.pradeep.sensordata.databinding.ActivityMainBinding
 import com.pradeep.sensordata.services.SensorDataService
 import com.pradeep.sensordata.utils.isMyServiceRunning
@@ -17,24 +24,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.*
-import java.lang.Exception
-import android.widget.Toast
-
-import java.io.File
-
-import android.os.Environment
-import androidx.core.content.FileProvider
-import com.pradeep.sensordata.BuildConfig
-import java.util.ArrayList
-
-
-
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
-
-
+    private lateinit var mService: SensorDataService
+    private var mBound: Boolean = false
     lateinit var binding: ActivityMainBinding
+
     private var requestUri = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result != null && result.resultCode == Activity.RESULT_OK) {
             result.data?.let { intent ->
@@ -48,6 +45,36 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    /** Defines callbacks for service binding, passed to bindService()  */
+    private val connection = object : ServiceConnection {
+
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            val binder = service as SensorDataService.LocalBinder
+            mService = binder.getService()
+            mBound = true
+            if(binding.llValues.visibility==View.INVISIBLE){
+                binding.llValues.visibility=View.VISIBLE
+            }
+            mService.callback= { acc:FloatArray,gyro:FloatArray ->
+               lifecycle.coroutineScope.launch {
+                   binding.tvAccx.setText(acc[0].toString())
+                   binding.tvAccy.setText(acc[1].toString())
+                   binding.tvAccz.setText(acc[2].toString())
+                   binding.tvGyrox.setText(gyro[0].toString())
+                   binding.tvGyroy.setText(gyro[1].toString())
+                   binding.tvGyroz.setText(gyro[2].toString())
+               }
+            }
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            mService.callback=null
+            mBound = false
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -68,14 +95,20 @@ class MainActivity : AppCompatActivity() {
                 else{
                     applicationContext.startService(Intent(this,SensorDataService::class.java))
                 }
+                Intent(this, SensorDataService::class.java).also { intent ->
+                    bindService(intent, connection, Context.BIND_AUTO_CREATE)
+                }
                 binding.btnStartService.setText("Stop Sensor Data Collection")
                 Snackbar.make(binding.root,"Service Started", Snackbar.LENGTH_SHORT).show()
             }
             else{
+                unbindService(connection)
+                mBound = false
                 applicationContext.stopService(Intent(this,SensorDataService::class.java))
                 binding.btnStartService.setText("Start Sensor Data Collection")
                 Snackbar.make(binding.root,"Service Stopped", Snackbar.LENGTH_SHORT).show()
             }
+
         }
         binding.btnClearCsv.setOnClickListener {
             if(isMyServiceRunning(SensorDataService::class.java)){
